@@ -1,0 +1,509 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>AI Document Assistant</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <style>
+    * {
+      box-sizing: border-box;
+    }
+    
+    body { 
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      margin: 0; 
+      padding: 0; 
+      min-height: 100vh;
+    }
+    
+    header { 
+      background: rgba(45, 137, 239, 0.9);
+      color: white; 
+      padding: 1.5rem; 
+      text-align: center;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+    }
+    
+    header h1 {
+      margin: 0;
+      font-size: 2rem;
+      font-weight: 300;
+    }
+    
+    .container { 
+      max-width: 900px; 
+      margin: 20px auto; 
+      background: white; 
+      border-radius: 15px; 
+      box-shadow: 0 10px 30px rgba(0,0,0,0.2); 
+      padding: 25px;
+      min-height: 600px;
+    }
+    
+    .upload-section {
+      display: flex;
+      gap: 15px;
+      align-items: center;
+      padding: 20px;
+      background: #f8f9fa;
+      border-radius: 10px;
+      margin-bottom: 20px;
+      border: 2px dashed #dee2e6;
+      transition: all 0.3s ease;
+    }
+    
+    .upload-section:hover {
+      border-color: #2d89ef;
+      background: #e7f3ff;
+    }
+    
+    .upload-section input[type="file"] {
+      flex: 1;
+      padding: 10px;
+      border: 1px solid #ccc;
+      border-radius: 8px;
+      background: white;
+    }
+    
+    .upload-btn {
+      background: #28a745;
+      color: white;
+      border: none;
+      padding: 12px 20px;
+      border-radius: 8px;
+      cursor: pointer;
+      font-weight: 500;
+      transition: background 0.3s ease;
+    }
+    
+    .upload-btn:hover {
+      background: #218838;
+    }
+    
+    .upload-btn:disabled {
+      background: #6c757d;
+      cursor: not-allowed;
+    }
+    
+    .chat-box { 
+      height: 450px; 
+      overflow-y: auto; 
+      border: 1px solid #e0e0e0; 
+      padding: 20px; 
+      border-radius: 10px; 
+      margin-bottom: 20px;
+      background: #fafafa;
+      scroll-behavior: smooth;
+    }
+    
+    .msg { 
+      margin: 12px 0; 
+      padding: 12px 16px; 
+      border-radius: 15px; 
+      max-width: 75%; 
+      word-wrap: break-word;
+      line-height: 1.4;
+      animation: fadeIn 0.3s ease;
+    }
+    
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(10px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+    
+    .user { 
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      color: white;
+      margin-left: auto; 
+      border-bottom-right-radius: 5px;
+    }
+    
+    .bot { 
+      background: white;
+      color: #333;
+      margin-right: auto;
+      border: 1px solid #e0e0e0;
+      border-bottom-left-radius: 5px;
+    }
+    
+    .bot.success {
+      background: #d4edda;
+      border-color: #c3e6cb;
+      color: #155724;
+    }
+    
+    .bot.error {
+      background: #f8d7da;
+      border-color: #f5c6cb;
+      color: #721c24;
+    }
+    
+    .bot.loading {
+      background: #e2e3e5;
+      animation: pulse 1.5s infinite;
+    }
+    
+    @keyframes pulse {
+      0% { opacity: 0.7; }
+      50% { opacity: 1; }
+      100% { opacity: 0.7; }
+    }
+    
+    .controls { 
+      display: flex; 
+      gap: 15px; 
+      align-items: stretch;
+    }
+    
+    input[type="text"] { 
+      flex: 1; 
+      padding: 15px; 
+      border: 2px solid #e0e0e0; 
+      border-radius: 10px;
+      font-size: 16px;
+      transition: border-color 0.3s ease;
+    }
+    
+    input[type="text"]:focus {
+      outline: none;
+      border-color: #2d89ef;
+      box-shadow: 0 0 0 3px rgba(45, 137, 239, 0.1);
+    }
+    
+    button { 
+      padding: 15px 25px; 
+      border: none; 
+      border-radius: 10px; 
+      cursor: pointer;
+      font-size: 16px;
+      font-weight: 500;
+      transition: all 0.3s ease;
+    }
+    
+    button:disabled {
+      cursor: not-allowed;
+      opacity: 0.6;
+    }
+    
+    .send { 
+      background: #2d89ef; 
+      color: white; 
+    }
+    
+    .send:hover:not(:disabled) { 
+      background: #1e7ce8;
+      transform: translateY(-2px);
+    }
+    
+    .clear { 
+      background: #dc3545; 
+      color: white; 
+    }
+    
+    .clear:hover:not(:disabled) { 
+      background: #c82333;
+      transform: translateY(-2px);
+    }
+    
+    .status {
+      text-align: center;
+      padding: 10px;
+      margin-bottom: 15px;
+      border-radius: 8px;
+      font-weight: 500;
+    }
+    
+    .status.success {
+      background: #d4edda;
+      color: #155724;
+      border: 1px solid #c3e6cb;
+    }
+    
+    .status.error {
+      background: #f8d7da;
+      color: #721c24;
+      border: 1px solid #f5c6cb;
+    }
+    
+    /* Mobile Responsive */
+    @media (max-width: 768px) {
+      .container {
+        margin: 10px;
+        padding: 15px;
+      }
+      
+      .upload-section {
+        flex-direction: column;
+        align-items: stretch;
+      }
+      
+      .controls {
+        flex-direction: column;
+        gap: 10px;
+      }
+      
+      .msg {
+        max-width: 90%;
+      }
+      
+      header h1 {
+        font-size: 1.5rem;
+      }
+    }
+    
+    /* Scrollbar styling */
+    .chat-box::-webkit-scrollbar {
+      width: 8px;
+    }
+    
+    .chat-box::-webkit-scrollbar-track {
+      background: #f1f1f1;
+      border-radius: 4px;
+    }
+    
+    .chat-box::-webkit-scrollbar-thumb {
+      background: #c1c1c1;
+      border-radius: 4px;
+    }
+    
+    .chat-box::-webkit-scrollbar-thumb:hover {
+      background: #a8a8a8;
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>📄 Ohidul Nannu Document Assistant</h1>
+  </header>
+
+  <div class="container">
+    <div id="status" class="status" style="display: none;"></div>
+    
+    <div class="upload-section">
+      <input type="file" id="fileInput" accept=".pdf,.docx" aria-label="Choose document file">
+      <button class="upload-btn" onclick="uploadFile()">📤 Upload Document (.pdf/.docs)</button>
+    </div>
+
+    <div class="chat-box" id="chatBox" role="log" aria-live="polite"></div>
+
+    <div class="controls">
+      <input type="text" id="userInput" placeholder="Ask something about your document..." aria-label="Type your message">
+      <button class="send" onclick="sendMessage()" id="sendBtn">💬 Send</button>
+      <button class="clear" onclick="clearHistory()">🗑️ Clear</button>
+    </div>
+  </div>
+
+  <script>
+    const chatBox = document.getElementById("chatBox");
+    const userInput = document.getElementById("userInput");
+    const sendBtn = document.getElementById("sendBtn");
+    const statusDiv = document.getElementById("status");
+    
+    let isLoading = false;
+    let uploadedFile = null;
+
+    // Initialize session when page loads
+    window.onload = async function() {
+      try {
+        const res = await fetch("/start_session", { method: "POST" });
+        if (res.ok) {
+          console.log("✅ Session initialized");
+          addMessage("bot", "👋 Welcome! Upload a PDF or DOCX document to get started, or just chat with me about medical topics.", "success");
+        }
+      } catch (error) {
+        console.error("❌ Failed to initialize session:", error);
+        showStatus("Failed to initialize session. Please refresh the page.", "error");
+      }
+    };
+
+    // Show status messages
+    function showStatus(message, type) {
+      statusDiv.textContent = message;
+      statusDiv.className = `status ${type}`;
+      statusDiv.style.display = "block";
+      setTimeout(() => {
+        statusDiv.style.display = "none";
+      }, 5000);
+    }
+
+    // Add message to chat
+    function addMessage(sender, text, type = "") {
+      const msg = document.createElement("div");
+      msg.className = `msg ${sender === "user" ? "user" : "bot"} ${type}`;
+      msg.textContent = text;
+      chatBox.appendChild(msg);
+      chatBox.scrollTop = chatBox.scrollHeight;
+      return msg;
+    }
+
+    // File upload function
+    async function uploadFile() {
+      const fileInput = document.getElementById("fileInput");
+      const file = fileInput.files[0];
+      
+      if (!file) {
+        showStatus("Please select a file first.", "error");
+        return;
+      }
+      
+      // Validate file type
+      const allowedTypes = [
+        'application/pdf',
+        'application/vnd.openxmlformats-officedocument.wordprocessingml.document'
+      ];
+      
+      if (!allowedTypes.includes(file.type) && !file.name.toLowerCase().match(/\.(pdf|docx)$/)) {
+        showStatus("Only PDF and DOCX files are supported.", "error");
+        return;
+      }
+      
+      // Validate file size (10MB)
+      if (file.size > 10 * 1024 * 1024) {
+        showStatus("File size must be less than 10MB.", "error");
+        return;
+      }
+      
+      console.log(`📤 Uploading: ${file.name} (${(file.size / 1024 / 1024).toFixed(2)} MB)`);
+      
+      const loadingMsg = addMessage("bot", `📤 Uploading ${file.name}...`, "loading");
+      
+      const formData = new FormData();
+      formData.append("file", file);
+
+      try {
+        const res = await fetch("/upload", { 
+          method: "POST", 
+          body: formData 
+        });
+        
+        // Remove loading message
+        loadingMsg.remove();
+        
+        if (!res.ok) {
+          throw new Error(`HTTP ${res.status}: ${res.statusText}`);
+        }
+        
+        const data = await res.json();
+        
+        if (data.ok) {
+          uploadedFile = file.name;
+          addMessage("bot", data.message, "success");
+          showStatus("File uploaded successfully!", "success");
+          userInput.placeholder = `Ask questions about ${file.name}...`;
+        } else {
+          addMessage("bot", `❌ ${data.message}`, "error");
+          showStatus(data.message, "error");
+        }
+      } catch (error) {
+        loadingMsg.remove();
+        console.error("Upload error:", error);
+        addMessage("bot", `🔥 Upload failed: ${error.message}`, "error");
+        showStatus(`Upload failed: ${error.message}`, "error");
+      }
+    }
+
+    // Send message function
+    async function sendMessage() {
+      if (isLoading) return;
+      
+      const message = userInput.value.trim();
+      if (!message) {
+        showStatus("Please type a message.", "error");
+        return;
+      }
+
+      // Disable input during processing
+      isLoading = true;
+      sendBtn.disabled = true;
+      userInput.disabled = true;
+
+      addMessage("user", message);
+      userInput.value = "";
+
+      const loadingMsg = addMessage("bot", "🤔 Thinking...", "loading");
+
+      try {
+        const res = await fetch("/chat", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ message })
+        });
+
+        // Remove loading message
+        loadingMsg.remove();
+
+        if (!res.ok) {
+          throw new Error(`HTTP ${res.status}: ${res.statusText}`);
+        }
+
+        const data = await res.json();
+        
+        if (data.ok) {
+          addMessage("bot", data.reply);
+        } else {
+          addMessage("bot", `❌ ${data.reply || 'Unknown error'}`, "error");
+        }
+      } catch (error) {
+        loadingMsg.remove();
+        console.error("Chat error:", error);
+        addMessage("bot", `🔥 Connection error: ${error.message}`, "error");
+        showStatus(`Failed to send message: ${error.message}`, "error");
+      } finally {
+        // Re-enable input
+        isLoading = false;
+        sendBtn.disabled = false;
+        userInput.disabled = false;
+        userInput.focus();
+      }
+    }
+
+    // Clear history function
+    async function clearHistory() {
+      try {
+        const res = await fetch("/clear_history", { method: "POST" });
+        const data = await res.json();
+        
+        chatBox.innerHTML = "";
+        uploadedFile = null;
+        userInput.placeholder = "Ask something...";
+        
+        if (data.ok) {
+          addMessage("bot", data.message, "success");
+          showStatus("History cleared successfully!", "success");
+        }
+      } catch (error) {
+        console.error("Clear error:", error);
+        showStatus("Failed to clear history.", "error");
+      }
+    }
+
+    // Enter key support
+    userInput.addEventListener("keypress", function(event) {
+      if (event.key === "Enter" && !isLoading) {
+        sendMessage();
+      }
+    });
+
+    // File input change handler
+    document.getElementById("fileInput").addEventListener("change", function(event) {
+      const file = event.target.files[0];
+      if (file) {
+        console.log(`📁 File selected: ${file.name} (${file.type})`);
+      }
+    });
+
+    // Debug function (available in console)
+    window.debugSession = async function() {
+      try {
+        const res = await fetch("/debug_session");
+        const data = await res.json();
+        console.log("🐛 Session Debug:", data);
+        return data;
+      } catch (error) {
+        console.error("Debug error:", error);
+      }
+    };
+  </script>
+</body>
+</html>
