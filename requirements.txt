@@ -5,3 +5,4 @@ Werkzeug
 PyMuPDF
 python-docx
 groq
+gunicorn
